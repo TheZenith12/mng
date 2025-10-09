@@ -8,21 +8,24 @@ const router = express.Router();
 // REGISTER
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, isAdmin } = req.body;
 
+    // User аль хэдийн байгааг шалгах
     const existingUser = await User.findOne({ email });
-    if (existingUser) return res.status(400).json({ message: "Email already exists" });
+    if (existingUser) return res.status(400).json({ message: "User already exists" });
 
+    // Password hash хийх
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new User({
+    // User үүсгэх
+    const newUser = await User.create({
       username,
       email,
-      password: hashedPassword
+      password: hashedPassword,
+      isAdmin: isAdmin || false
     });
 
-    await newUser.save();
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({ message: "User created", user: newUser });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -46,12 +49,12 @@ router.post("/login", async (req, res) => {
     );
 
     res.json({
-  _id: user._id,
-  username: user.username,
-  email: user.email,
-  isAdmin: user.isAdmin,
-  token
-  });
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      token
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

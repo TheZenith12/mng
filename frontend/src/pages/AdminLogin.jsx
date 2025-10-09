@@ -1,30 +1,43 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { serverUrl } from "./global";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
-  // ⬇️ Нэвтрэх логик энд байна
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  console.log({ email, password });
+  
+    if (!email || !password) {
+      alert("Имэйл болон нууц үг хоёул байх ёстой!");
+      return;
+    }
+
     try {
-      // Backend рүү хүсэлт явуулна
-      const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
-      const user = res.data; // 🟢 Backend-аас ирсэн хэрэглэгчийн мэдээлэл
+      // Backend рүү нэг удаа POST request
+      let url = serverUrl + "/api/auth/login";
+      const res = await axios.post(
+        url,
+        { email, password },
+        { headers: { "Content-Type": "application/json" } }
+      );
+
+      const user = res.data; // Backend-аас ирсэн хэрэглэгч
 
       if (user.isAdmin) {
-        // Хэрэв админ бол localStorage-д хадгалаад dashboard руу зөөнө
+        // Админ бол localStorage-д хадгалах ба dashboard руу чиглүүлэх
         localStorage.setItem("user", JSON.stringify(user));
         navigate("/admin/dashboard");
       } else {
         alert("Админ эрхгүй хэрэглэгч байна!");
       }
     } catch (err) {
-      console.error(err);
-      alert("Нэвтрэхэд алдаа гарлаа!");
+      console.error(err.response?.data || err);
+      alert(err.response?.data?.message || "Нэвтрэхэд алдаа гарлаа!");
     }
   };
 
