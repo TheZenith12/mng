@@ -4,23 +4,16 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Refresh хийсний дараа login хадгалах
+  // Refresh хийхэд localStorage-с хэрэглэгчийг унших
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
-
-  const login = (username, password) => {
-    // Энгийн жишээ — username, password хоосон биш байхад login гэж үзье
-    if (username && password) {
-      const newUser = { username };
-      setUser(newUser);
-      localStorage.setItem("user", JSON.stringify(newUser));
-      return true;
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
-    return false;
-  };
+    setLoading(false);
+  }, []);
 
   const logout = () => {
     setUser(null);
@@ -28,7 +21,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, setUser, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,35 +1,36 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { serverUrl } from "./global";
+import { AuthContext } from "../context/AuthContext";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { setUser } = useContext(AuthContext); // 👈 Context-оос setUser авах
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  console.log({ email, password });
-  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
     if (!email || !password) {
       alert("Имэйл болон нууц үг хоёул байх ёстой!");
       return;
     }
 
     try {
-      // Backend рүү нэг удаа POST request
-      let url = serverUrl + "/api/auth/login";
+      const url = serverUrl + "/api/auth/login";
       const res = await axios.post(
         url,
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
 
-      const user = res.data; // Backend-аас ирсэн хэрэглэгч
+      const user = res.data;
 
       if (user.isAdmin) {
-        // Админ бол localStorage-д хадгалах ба dashboard руу чиглүүлэх
+        // ✅ Context-д хадгална
+        setUser(user);
         localStorage.setItem("user", JSON.stringify(user));
         navigate("/admin/dashboard");
       } else {
@@ -43,7 +44,10 @@ export default function AdminLogin() {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-purple-200 to-blue-200">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-md w-96">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white p-8 rounded-lg shadow-md w-96"
+      >
         <h2 className="text-xl font-bold mb-6 text-center">Админ нэвтрэх</h2>
         <input
           type="email"
