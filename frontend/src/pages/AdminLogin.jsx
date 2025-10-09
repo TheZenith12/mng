@@ -8,36 +8,31 @@ export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
-  const { setUser } = useContext(AuthContext); // 👈 Context-оос setUser авах
+  const { setUser } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!email || !password) {
       alert("Имэйл болон нууц үг хоёул байх ёстой!");
       return;
     }
 
     try {
-      const url = serverUrl + "/api/auth/login";
       const res = await axios.post(
-        url,
+        serverUrl + "/api/auth/login",
         { email, password },
         { headers: { "Content-Type": "application/json" } }
       );
 
       const user = res.data;
-
       if (user.isAdmin) {
-        // ✅ Context-д хадгална
-        setUser(user);
-        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user); // 🔹 Context-д хадгалах
+        localStorage.setItem("user", JSON.stringify(user)); // 🔹 Persist
         navigate("/admin/dashboard");
       } else {
         alert("Админ эрхгүй хэрэглэгч байна!");
       }
     } catch (err) {
-      console.error(err.response?.data || err);
       alert(err.response?.data?.message || "Нэвтрэхэд алдаа гарлаа!");
     }
   };

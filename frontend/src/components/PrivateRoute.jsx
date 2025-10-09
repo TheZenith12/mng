@@ -1,16 +1,24 @@
-import React, { useContext } from "react";
+import { useContext } from "react";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 const PrivateRoute = ({ children }) => {
-  const { user } = useContext(AuthContext);
+  const { user, loading } = useContext(AuthContext);
 
-  // Хэрэв хэрэглэгч login хийгээгүй бол /admin (login page) руу буцаана
-  if (!user) {
+  // 🔹 LocalStorage-аас user сэргээж байх үед redirect хийхгүй
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p className="text-lg font-semibold">Түр хүлээнэ үү...</p>
+      </div>
+    );
+  }
+
+  // 🔹 Хэрэглэгч байхгүй бол login руу буцаах
+  if (!user || !user.isAdmin) {
     return <Navigate to="/admin" replace />;
   }
 
-  // Хэрэв login хийсэн бол хуудсыг харуулна
   return children;
 };
 

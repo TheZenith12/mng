@@ -4,15 +4,14 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // 🔹 localStorage ачаалах төлөв
 
-  // Refresh хийхэд localStorage-с хэрэглэгчийг унших
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-    setLoading(false);
+    setLoading(false); // 🔹 ачаалсан гэсэн тэмдэг
   }, []);
 
   const logout = () => {
