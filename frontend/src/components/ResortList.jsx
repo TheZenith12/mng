@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-
+import { serverUrl } from "../pages/global";
 function ResortList() {
   const [resorts, setResorts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  let url = serverUrl;
   useEffect(() => {
     // 🔹 API-аас resort жагсаалт татах
-    axios.get("http://localhost:5000/api/resorts")
+    axios.get(url +"/api/resorts")
       .then(res => {
         setResorts(res.data);
         setLoading(false);
