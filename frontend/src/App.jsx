@@ -1,6 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
 import AdminDashboard from "./pages/AdminDashboard";
 import PrivateRoute from "./components/PrivateRoute";
 import AuthCombined from "./pages/AuthCombined";
@@ -16,17 +15,7 @@ export default function App() {
       <Router>
         <Routes>
           {/* Login page */}
-          <Route path="/admin" element={<AdminLogin />} />
-
-          {/* Protected pages */}
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Home />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/" element={<AdminLogin />} />
           <Route
             path="/resorts/:id"
             element={
