@@ -1,7 +1,10 @@
 import axios from "axios";
+import { serverUrl } from "../pages/global";
+
+let url = serverUrl;
 
 const instance = axios.create({
-  baseURL: "http://localhost:5000/api", // Backend root URL
+  baseURL: url +"/api", // Backend root URL
 });
 
 export default instance;

@@ -1,18 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { serverUrl } from "./global";
 function EditResort() {
   const { id } = useParams(); // URL-аас id авах
   const navigate = useNavigate();
 
   const [resort, setResort] = useState(null); // анхны утга null
 
+  let url = serverUrl;
   // ✅ Resort мэдээлэл татах
   useEffect(() => {
     if (!id) return;
     axios
-      .get(`http://localhost:5000/api/resorts/${id}`)
+      .get(url + "api/resorts/${id}")
       .then((res) => {
         console.log("✅ Resort fetched:", res.data);
         setResort(res.data);
@@ -32,7 +33,7 @@ function EditResort() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`http://localhost:5000/api/resorts/${id}`, resort);
+      await axios.put(url + "api/resorts/${id}", resort);
       alert("✅ Амжилттай шинэчлэгдлээ!");
       navigate("/admin/dashboard");
     } catch (err) {

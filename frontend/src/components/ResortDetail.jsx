@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { serverUrl } from "../pages/global";
+
+let url = serverUrl;
 
 export default function ResortDetail() {
   const { id } = useParams();
   const [resort, setResort] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/resorts/${id}`)
+    fetch(url + "api/resorts/${id}")
       .then((res) => res.json())
       .then((data) => setResort(data))
       .catch((err) => console.error(err));

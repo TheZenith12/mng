@@ -2,6 +2,9 @@ import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { serverUrl } from './global';
+
+let url = serverUrl;
 
 export default function AdminDashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -9,7 +12,7 @@ export default function AdminDashboard() {
 
   // Resort жагсаалтаа татах
   useEffect(() => {
-    axios.get('http://localhost:5000/api/resorts')
+    axios.get(url +"/api/resorts")
       .then(res => setResorts(res.data))
       .catch(err => console.error("Resort татах үед алдаа:", err));
   }, []);
@@ -18,7 +21,7 @@ export default function AdminDashboard() {
   const deleteResort = async (id) => {
     if (!confirm('Устгах уу?')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/resorts/${id}`);
+      await axios.delete(url+"api/resorts/${id}");
       setResorts(prev => prev.filter(r => r._id !== id));
     } catch (err) {
       alert('Устгах үед алдаа гарлаа: ' + (err.response?.data?.message || err.message));
