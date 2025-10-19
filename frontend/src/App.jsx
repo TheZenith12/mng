@@ -1,63 +1,33 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import AdminDashboard from "./pages/AdminDashboard";
-import PrivateRoute from "./components/PrivateRoute";
-import AuthCombined from "./pages/AuthCombined";
-import ResortDetail from "./components/ResortDetail";
-import ResortList from "./components/ResortList";
-import AdminLogin from "./pages/AdminLogin";
-import EditResort from "./pages/EditResorts";
-import { AuthProvider } from "./context/AuthContext"; // 👈 нэмэгдсэн
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Sidebar from './components/Sidebar'
+import Topbar from './components/Topbar'
+import RequireAuth from './components/RequireAuth'
+import Login from './pages/Login'
+import Resorts from './pages/Resorts'
+import EditResort from './pages/EditResorts'
+import FileManager from './pages/FileManager'
 
-export default function App() {
+function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          {/* Login page */}
-          <Route path="/" element={<AdminLogin />} />
-          <Route
-            path="/resorts/:id"
-            element={
-              <PrivateRoute>
-                <ResortDetail />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/resorts"
-            element={
-              <PrivateRoute>
-                <ResortList />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/auth"
-            element={
-              <PrivateRoute>
-                <AuthCombined />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/dashboard"
-            element={
-              <PrivateRoute>
-                <AdminDashboard />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/admin/edit/:id"
-            element={
-              <PrivateRoute>
-                <EditResort />
-              </PrivateRoute>
-            }
-          />
-        </Routes>
-      </Router>
-    </AuthProvider>
-  );
+    <BrowserRouter>
+      <div className="min-h-screen flex bg-gray-50">
+        <Sidebar />
+        <div className="flex-1 flex flex-col">
+          <Topbar />
+          <main className="p-6">
+            <Routes>
+              <Route path="/" element={<Login />} />
+              <Route path="/resorts" element={<RequireAuth><Resorts /></RequireAuth>} />
+              <Route path="/resorts/new" element={<RequireAuth><EditResort /></RequireAuth>} />
+              <Route path="/files" element={<RequireAuth><FileManager /></RequireAuth>} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+        </div>
+      </div>
+    </BrowserRouter>
+  )
 }
+
+export default App

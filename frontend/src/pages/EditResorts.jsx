@@ -1,92 +1,86 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { serverUrl } from "./global";
+import React, { useEffect, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+
 function EditResort() {
-  const { id } = useParams(); // URL-аас id авах
-  const navigate = useNavigate();
+  const navigate = useNavigate()
+  const { id } = useParams()
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [loading, setLoading] = useState(false)
+  const isEdit = !!id
 
-  const [resort, setResort] = useState(null); // анхны утга null
-
-  let url = serverUrl;
-  // ✅ Resort мэдээлэл татах
   useEffect(() => {
-    if (!id) return;
-    axios
-      .get(url + "api/resorts/${id}")
-      .then((res) => {
-        console.log("✅ Resort fetched:", res.data);
-        setResort(res.data);
-      })
-      .catch((err) => {
-        console.error("❌ Resort fetch error:", err);
-        alert("Мэдээлэл татахад алдаа гарлаа!");
-      });
-  }, [id]);
-
-  // ✅ Input өөрчлөх
-  const handleChange = (e) => {
-    setResort({ ...resort, [e.target.name]: e.target.value });
-  };
-
-  // ✅ Хадгалах
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await axios.put(url + "api/resorts/${id}", resort);
-      alert("✅ Амжилттай шинэчлэгдлээ!");
-      navigate("/admin/dashboard");
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("❌ Шинэчлэхэд алдаа гарлаа!");
+    if (isEdit) {
+      fetch(`http://localhost:5000/api/admin/resorts/${id}`)
+        .then(res => res.json())
+        .then(data => {
+          setName(data.name)
+          setDescription(data.description)
+        })
+        .catch(() => {})
     }
-  };
+  }, [id])
 
-  if (!resort) return <p>⏳ Мэдээлэл ачаалж байна...</p>;
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const method = isEdit ? 'PUT' : 'POST'
+      const url = isEdit
+        ? `http://localhost:5000/api/admin/resorts/${id}`
+        : 'http://localhost:5000/api/admin/resorts'
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description })
+      })
+      if (!res.ok) throw new Error('Failed to save resort')
+      navigate('/resorts')
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <div style={{ padding: "30px" }}>
-      <h2>✏️ {resort.name} - Засах</h2>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "500px" }}>
+    <div className="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+      <h2 className="text-xl font-semibold mb-4">
+        {isEdit ? 'Edit Resort' : 'Create Resort'}
+      </h2>
+
+      <form onSubmit={handleSubmit} className="space-y-3">
         <input
-          type="text"
-          name="name"
-          value={resort.name}
-          onChange={handleChange}
-          placeholder="Нэр"
-          required
-        />
-        <input
-          type="text"
-          name="location"
-          value={resort.location}
-          onChange={handleChange}
-          placeholder="Байршил"
-          required
+          className="w-full p-2 border rounded"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Resort name"
         />
         <textarea
-          name="description"
-          value={resort.description}
-          onChange={handleChange}
-          placeholder="Тайлбар"
-          required
+          className="w-full p-2 border rounded"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="Description"
         />
-        <input
-          type="text"
-          name="image"
-          value={resort.image}
-          onChange={handleChange}
-          placeholder="Зурагны URL"
-        />
-        <button
-          type="submit"
-          style={{ background: "green", color: "white", padding: "8px", border: "none" }}
-        >
-          Хадгалах
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="px-4 py-2 border rounded"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
-  );
+  )
 }
 
-export default EditResort;
+export default EditResort
