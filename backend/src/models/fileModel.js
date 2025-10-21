@@ -1,28 +1,28 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const fileSchema = new mongoose.Schema({
-  filename: {
-    type: String,
-    required: true,
+const fileSchema = new mongoose.Schema(
+  {
+    resort: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Resort",
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ["image", "video"],
+      required: true,
+    },
+    url: {
+      type: String,
+      required: true,
+    },
+    filename: {
+      type: String,
+      required: true,
+    },
+    size: Number,
   },
-  path: {
-    type: String,
-    required: true,
-  },
-  mimetype: {
-    type: String,
-    required: true,
-  },
-  size: {
-    type: Number,
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true }
+);
 
-const File = mongoose.model('File', fileSchema);
-
-export default File;
+export default mongoose.model("File", fileSchema);

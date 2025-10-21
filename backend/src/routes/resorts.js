@@ -1,19 +1,47 @@
-import express from 'express';
+import express from "express";
+import multer from "multer";
+import path from "path";
 import {
-  getAllResorts,
+  getResorts,
   getResortById,
   createResort,
   updateResort,
-  deleteResort
-} from '../controllers/resortController.js';
-import { protect } from '../middleware/auth.js';
+  deleteResort,
+} from "../controllers/resortController.js";
 
 const router = express.Router();
 
-router.get('/', getAllResorts);
-router.get('/:id', getResortById);
-router.post('/', protect, createResort);
-router.put('/:id', protect, updateResort);
-router.delete('/:id', protect, deleteResort);
+// ===== Multer Config =====
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "public/uploads/resorts");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_"));
+  },
+});
+
+const upload = multer({ storage });
+
+// ===== Routes =====
+router.get("/", getResorts);
+router.get("/:id", getResortById);
+router.post(
+  "/new",
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "videos", maxCount: 5 },
+  ]),
+  createResort
+);
+router.put(
+  "/:id",
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "videos", maxCount: 5 },
+  ]),
+  updateResort
+);
+router.delete("/:id", deleteResort);
 
 export default router;

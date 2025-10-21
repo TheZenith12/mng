@@ -1,30 +1,19 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const resortSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-    },
-    description: {
-      type: String,
-      required: true,
-    },
-    location: {
-      type: String,
-      required: true,
-    },
-    price: {
-      type: Number,
-      required: true,
-    },
-    image: {
-      type: String,
-      default: '', // зургийн URL эсвэл path
-    },
+    name: { type: String, required: true },
+    description: String,
+    price: Number,
+    location: String,
+    files: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "File",
+      },
+    ],
   },
   { timestamps: true }
 );
 
-const Resort = mongoose.model('Resort', resortSchema);
-export default Resort;
+export default mongoose.model("Resort", resortSchema);

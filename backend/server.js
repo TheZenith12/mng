@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/auth.js';
 import resortRoutes from './src/routes/resorts.js';
+import fileRoutes from './src/routes/fileRoutes.js';
 
 dotenv.config();
 
@@ -31,9 +32,14 @@ fs.mkdirSync(uploadDir, { recursive: true });
 // Static файлуудыг serve хийх
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-app.use('/api/auth', authRoutes);
-app.use('/api/resorts', resortRoutes);
+app.use('/api/admin/resorts', resortRoutes);
+app.use('/api/admin/files', fileRoutes);
 app.use("/api/admin", authRoutes);
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: err.message });
+});
+
 
 app.get('/', (req, res) => {
   res.send('Backend server is running!');

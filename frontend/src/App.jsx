@@ -6,7 +6,8 @@ import RequireAuth from './components/RequireAuth'
 import Login from './pages/Login'
 import Resorts from './pages/Resorts'
 import EditResort from './pages/EditResorts'
-import FileManager from './pages/FileManager'
+import Files from './pages/Files'
+import AddResort from './pages/AddResorts'
 
 function App() {
   return (
@@ -19,8 +20,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Login />} />
               <Route path="/resorts" element={<RequireAuth><Resorts /></RequireAuth>} />
-              <Route path="/resorts/new" element={<RequireAuth><EditResort /></RequireAuth>} />
-              <Route path="/files" element={<RequireAuth><FileManager /></RequireAuth>} />
+              <Route path="/resorts/new" element={<RequireAuth><AddResort /></RequireAuth>} />
+              <Route path="/resorts/edit/:id" element={<RequireAuth><EditResort /></RequireAuth>} />
+              <Route path="/files" element={<RequireAuth><Files /></RequireAuth>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
