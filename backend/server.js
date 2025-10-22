@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 // Local imports (ESM хувилбар)
 import connectDB from './src/config/db.js';
 import authRoutes from './src/routes/auth.js';
-import resortRoutes from './src/routes/resorts.js';
+import resortRoutes from "./src/routes/resorts.js";
 import fileRoutes from './src/routes/fileRoutes.js';
 
 dotenv.config();
@@ -19,6 +19,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/uploads', express.static( 'public/uploads'));
 
 connectDB();
 
@@ -29,11 +30,10 @@ const __dirname = path.dirname(__filename);
 const uploadDir = path.join(__dirname, 'public', 'uploads', 'resorts');
 fs.mkdirSync(uploadDir, { recursive: true });
 
-// Static файлуудыг serve хийх
-app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+// Static файлуудыг serve хий
 
 app.use('/api/admin/resorts', resortRoutes);
-app.use('/api/admin/files', fileRoutes);
+app.use("/api/admin/files", fileRoutes);
 app.use("/api/admin", authRoutes);
 app.use((err, req, res, next) => {
   console.error(err.stack);

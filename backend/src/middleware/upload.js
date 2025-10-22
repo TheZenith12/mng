@@ -2,22 +2,35 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-// Хадгалах зам
-const uploadPath = "public/uploads/resorts";
+// 📁 Upload хадгалах зам
+const uploadPath = "public/uploads/resorts"; // ✅ 'uploads' гэж бичих нь илүү зөв, нийтлэг
 
-// Хавтас байхгүй бол автоматаар үүсгэнэ
+// 📂 Хэрвээ хавтас байхгүй бол автоматаар үүсгэнэ
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
+  console.log("📁 Upload folder created:", uploadPath);
 }
 
-// Multer тохиргоо
+// ⚙️ Multer storage тохиргоо
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // жишээ: 1729491023123.jpg
+    const uniqueName = Date.now() + "-" + file.originalname;
+    cb(null, uniqueName);
   },
 });
 
-export const upload = multer({ storage });
+// ✅ Нэг файл upload хийх middleware
+export const uploadSingle = multer({ storage }).single("file");
+
+// ✅ Олон зураг, видео upload хийх middleware
+export const uploadResortFiles = multer({ storage }).fields([
+  { name: "images", maxCount: 10 },
+  { name: "videos", maxCount: 10 },
+]);
+
+// ✅ Ерөнхий upload (default export)
+const upload = multer({ storage });
+export default upload;

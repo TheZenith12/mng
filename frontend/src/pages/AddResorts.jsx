@@ -10,22 +10,43 @@ function AddResort() {
     price: "",
     location: "",
   });
-  const [images, setImages] = useState([]);
-  const [videos, setVideos] = useState([]);
+
+  const [images, setImages] = useState([]); // олон зураг
+  const [videos, setVideos] = useState([]); // олон бичлэг
+  const [imageUrl, setImageUrl] = useState(""); // upload хийсэн нэг зураг URL
   const [loading, setLoading] = useState(false);
 
-  // 📝 input утга өөрчлөх
+  // 🧾 Input өөрчлөгдөхөд
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🖼 зураг сонгох
+  // 🖼️ Олон зураг сонгох
   const handleImages = (e) => setImages([...e.target.files]);
 
-  // 🎥 видео сонгох
+  // 🎥 Олон видео сонгох
   const handleVideos = (e) => setVideos([...e.target.files]);
 
-  // 📨 илгээх
+  // 🖼️ Нэг зураг upload хийх (жишээ upload API руу илгээж байна)
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await axios.post(`${API_BASE}/api/admin/files/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setImageUrl(res.data.path || res.data.image || ""); // backend юу буцааж байгаагаас хамаарна
+    } catch (err) {
+      console.error("❌ Зураг upload хийхэд алдаа гарлаа:", err);
+      alert("Зураг upload хийхэд алдаа гарлаа!");
+    }
+  };
+
+  // 📨 Resort нэмэх
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -37,26 +58,25 @@ function AddResort() {
       formData.append("price", form.price);
       formData.append("location", form.location);
 
-      images.forEach((file) => formData.append("images", file));
-      videos.forEach((file) => formData.append("videos", file));
+      images.forEach((img) => formData.append("images", img));
+      videos.forEach((vid) => formData.append("videos", vid));
 
-      const res = await axios.post(
-        `${API_BASE}/api/admin/resorts/new`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
+      if (imageUrl) formData.append("imageUrl", imageUrl);
+
+      const res = await axios.post(`${API_BASE}/api/admin/resorts/new`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       alert("✅ Амралтын газар амжилттай нэмэгдлээ!");
       console.log("✅ SERVER RESPONSE:", res.data);
 
-      // талбарыг цэвэрлэх
+      // талбар цэвэрлэх
       setForm({ name: "", description: "", price: "", location: "" });
       setImages([]);
       setVideos([]);
+      setImageUrl("");
     } catch (err) {
-      console.error("❌ Алдаа гарлаа:", err);
+      console.error("❌ Амралтын газар нэмэхэд алдаа гарлаа:", err);
       alert("Амралтын газар нэмэхэд алдаа гарлаа!");
     } finally {
       setLoading(false);
@@ -67,10 +87,7 @@ function AddResort() {
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-semibold mb-4">🏕️ Амралтын газар нэмэх</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-4 rounded shadow"
-      >
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
         <div>
           <label className="block font-medium mb-1">Нэр</label>
           <input
@@ -121,23 +138,25 @@ function AddResort() {
         </div>
 
         <div>
-          <label className="block font-medium mb-1">Зурагнууд</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImages}
-          />
+          <label className="block font-medium mb-1">🖼️ Олон зураг</label>
+          <input type="file" multiple accept="image/*" onChange={handleImages} />
         </div>
 
         <div>
-          <label className="block font-medium mb-1">Бичлэгүүд</label>
-          <input
-            type="file"
-            multiple
-            accept="video/*"
-            onChange={handleVideos}
-          />
+          <label className="block font-medium mb-1">📤 Нэг зураг upload (туршилтаар)</label>
+          <input type="file" accept="image/*" onChange={handleImageUpload} />
+          {imageUrl && (
+            <img
+              src={`${API_BASE}${imageUrl}`}
+              alt="Uploaded"
+              className="mt-2 w-32 rounded border"
+            />
+          )}
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">🎥 Бичлэгүүд</label>
+          <input type="file" multiple accept="video/*" onChange={handleVideos} />
         </div>
 
         <button

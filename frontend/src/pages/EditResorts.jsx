@@ -19,22 +19,43 @@ function EditResort() {
   const [existingImages, setExistingImages] = useState([]);
   const [existingVideos, setExistingVideos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [error, setError] = useState("");
 
-  // 🟢 Resort мэдээлэл авах
+  // 🟢 Resort мэдээлэл татах
   useEffect(() => {
-    axios
-      .get(`${API_BASE}/api/admin/resorts/${id}`)
-      .then((res) => {
+    const fetchResort = async () => {
+      try {
+        if (!id) {
+          setError("❌ Resort ID олдсонгүй");
+          return;
+        }
+
+        const res = await axios.get(`${API_BASE}/api/admin/resorts/${id}`);
+
+        // Backend-аас ирэх бүтэц: { resort, files } гэж үзье
+        const resort = res.data.resort || res.data;
+        const files = res.data.files || [];
+
         setForm({
-          name: res.data.name || "",
-          description: res.data.description || "",
-          price: res.data.price || "",
-          location: res.data.location || "",
+          name: resort?.name || "",
+          description: resort?.description || "",
+          price: resort?.price || "",
+          location: resort?.location || "",
         });
-        setExistingImages(res.data.images || []);
-        setExistingVideos(res.data.videos || []);
-      })
-      .catch((err) => console.error("Error loading resort:", err));
+
+        // зураг, бичлэг ялгах
+        setExistingImages(files.filter((f) => f.image).map((f) => f.image));
+        setExistingVideos(files.filter((f) => f.video).map((f) => f.video));
+      } catch (err) {
+        console.error("❌ Error loading resort:", err);
+        setError(err.response?.data?.message || "Resort ачаалахад алдаа гарлаа");
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    fetchResort();
   }, [id]);
 
   // 🟢 Input өөрчлөлт
@@ -42,43 +63,11 @@ function EditResort() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🟢 Шинэ зураг/видео оруулах
+  // 🖼 Зураг/видео сонгох
   const handleImages = (e) => setImages(e.target.files);
   const handleVideos = (e) => setVideos(e.target.files);
 
-  // 🟢 Update хийх
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("description", form.description);
-    formData.append("price", form.price);
-    formData.append("location", form.location);
-
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-    for (let i = 0; i < videos.length; i++) {
-      formData.append("videos", videos[i]);
-    }
-
-    try {
-      await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("✅ Амжилттай шинэчлэгдлээ!");
-      navigate("/resorts");
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("❌ Алдаа гарлаа: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🟢 Одоо байгаа зураг устгах (frontend дээрээс)
+  // 🗑 Одоо байгаа зураг/видео устгах
   const handleRemoveImage = (index) => {
     const updated = [...existingImages];
     updated.splice(index, 1);
@@ -91,8 +80,46 @@ function EditResort() {
     setExistingVideos(updated);
   };
 
-  if (loading) return <p>Updating...</p>;
-  if (!form.name && existingImages.length === 0) return <p>Loading...</p>;
+  // 🟢 Resort шинэчлэх
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("description", form.description);
+    formData.append("price", form.price);
+    formData.append("location", form.location);
+
+    // шинэ зураг/видео нэмэх
+    for (let i = 0; i < images.length; i++) {
+      formData.append("images", images[i]);
+    }
+    for (let i = 0; i < videos.length; i++) {
+      formData.append("videos", videos[i]);
+    }
+
+    // байгаа файлууд хадгалах
+    formData.append("existingImages", JSON.stringify(existingImages));
+    formData.append("existingVideos", JSON.stringify(existingVideos));
+
+    try {
+      await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("✅ Амжилттай шинэчлэгдлээ!");
+      navigate("/resorts");
+    } catch (err) {
+      console.error("❌ Update error:", err);
+      alert("Амралтын газар шинэчлэхэд алдаа гарлаа!");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🟢 Ачаалж байгаа үед
+  if (initializing) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -151,7 +178,7 @@ function EditResort() {
           </div>
         </div>
 
-        {/* Одоо байгаа зураг, бичлэг */}
+        {/* 🖼️ Одоо байгаа зурагнууд */}
         <div>
           <h3 className="font-medium mt-3 mb-1">Одоо байгаа зургууд</h3>
           <div className="flex flex-wrap gap-2">
@@ -196,10 +223,11 @@ function EditResort() {
           </div>
         </div>
 
-        {/* Шинээр upload хийх */}
+        {/* 🆕 Шинээр upload хийх */}
         <div className="mt-3">
           <label className="block font-medium mb-1">Шинэ зураг оруулах</label>
           <input type="file" multiple accept="image/*" onChange={handleImages} />
+
           <label className="block font-medium mb-1 mt-2">
             Шинэ бичлэг оруулах
           </label>
@@ -209,6 +237,7 @@ function EditResort() {
         <button
           type="submit"
           className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4"
+          disabled={loading}
         >
           {loading ? "Хадгалж байна..." : "Шинэчлэх"}
         </button>
@@ -218,3 +247,4 @@ function EditResort() {
 }
 
 export default EditResort;
+    

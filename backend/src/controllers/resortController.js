@@ -4,7 +4,9 @@ import File from "../models/fileModel.js";
 import path from "path";
 import fs from "fs";
 
+// ============================================
 // ✅ GET all resorts
+// ============================================
 export const getResorts = async (req, res) => {
   try {
     const resorts = await Resort.find().sort({ createdAt: -1 });
@@ -15,13 +17,15 @@ export const getResorts = async (req, res) => {
   }
 };
 
-// ✅ GET one resort
+// ============================================
+// ✅ GET resort by ID
+// ============================================
 export const getResortById = async (req, res) => {
   try {
     const resort = await Resort.findById(req.params.id);
     if (!resort) return res.status(404).json({ message: "Resort олдсонгүй" });
 
-    // Resort-д холбогдсон файлуудыг тусад нь татах
+    // Resort-д холбогдсон файлуудыг авчрах
     const files = await File.find({ resortsId: resort._id });
 
     res.json({ resort, files });
@@ -31,36 +35,57 @@ export const getResortById = async (req, res) => {
   }
 };
 
-// ✅ CREATE new resort + upload files
+// ============================================
+// ✅ CREATE new resort
+// ============================================
 export const createResort = async (req, res) => {
   try {
     const { name, description, price, location } = req.body;
 
-    // Эхлээд Resort үүсгэнэ
-    const resort = new Resort({
+    // Зураг байвал авах
+    const imageUrl = req.files?.images?.[0]
+      ? `/uploads/resorts/${req.files.images[0].filename}`
+      : "";
+
+    // Resort үүсгэнэ
+    const newResort = new Resort({
       name,
       description,
       price,
       location,
+      image: imageUrl || "",
     });
 
-    const savedResort = await resort.save();
+    const savedResort = await newResort.save();
 
-    // ⚡ Upload хийсэн файлуудыг хадгалах
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const fileUrl = `/uploads/resorts/${file.filename}`;
+    // Файлууд хадгалах (зураг, видео)
+    if (req.files && (req.files.images || req.files.videos)) {
+      if (req.files.images ) {
+        for (const file of req.files.images) {
+          const fileUrl = `/uploads/resorts/${file.filename}`;
+          const newFile = new File({
+            resortsId: savedResort._id,
+            filename: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype,
+            image: fileUrl,
+          });
+          await newFile.save();
+        }
+      }
 
-        const newFile = new File({
-          resortsId: savedResort._id,
-          filename: file.originalname,
-          size: file.size,
-          mimetype: file.mimetype,
-          image: file.mimetype.startsWith("image/") ? fileUrl : "",
-          video: file.mimetype.startsWith("video/") ? fileUrl : "",
-        });
-
-        await newFile.save();
+      if (req.files.videos) {
+        for (const file of req.files.videos) {
+          const fileUrl = `/uploads/resorts/${file.filename}`;
+          const newFile = new File({
+            resortsId: savedResort._id,
+            filename: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype,
+            video: fileUrl,
+          });
+          await newFile.save();
+        }
       }
 
       console.log("✅ Files saved successfully");
@@ -73,13 +98,13 @@ export const createResort = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Resort үүсгэхэд алдаа:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Resort үүсгэхэд алдаа гарлаа" });
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
+// ============================================
 // ✅ UPDATE resort
+// ============================================
 export const updateResort = async (req, res) => {
   try {
     const { id } = req.params;
@@ -88,6 +113,7 @@ export const updateResort = async (req, res) => {
     const resort = await Resort.findById(id);
     if (!resort) return res.status(404).json({ message: "Resort олдсонгүй" });
 
+    // Мэдээлэл шинэчлэх
     resort.name = name || resort.name;
     resort.description = description || resort.description;
     resort.price = price || resort.price;
@@ -95,21 +121,34 @@ export const updateResort = async (req, res) => {
 
     await resort.save();
 
-    // Хэрвээ шинэ файл upload хийсэн бол хадгалах
-    if (req.files && req.files.length > 0) {
-      for (const file of req.files) {
-        const fileUrl = `/uploads/resorts/${file.filename}`;
+    // Хэрвээ шинэ файлууд ирсэн бол хадгалах
+    if (req.files) {
+      if (req.files.images) {
+        for (const file of req.files.images) {
+          const fileUrl = `/uploads/resorts/${file.filename}`;
+          const newFile = new File({
+            resortsId: resort._id,
+            filename: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype,
+            image: fileUrl,
+          });
+          await newFile.save();
+        }
+      }
 
-        const newFile = new File({
-          resortsId: resort._id,
-          filename: file.originalname,
-          size: file.size,
-          mimetype: file.mimetype,
-          image: file.mimetype.startsWith("image/") ? fileUrl : "",
-          video: file.mimetype.startsWith("video/") ? fileUrl : "",
-        });
-
-        await newFile.save();
+      if (req.files.videos) {
+        for (const file of req.files.videos) {
+          const fileUrl = `/uploads/resorts/${file.filename}`;
+          const newFile = new File({
+            resortsId: resort._id,
+            filename: file.originalname,
+            size: file.size,
+            mimetype: file.mimetype,
+            video: fileUrl,
+          });
+          await newFile.save();
+        }
       }
     }
 
@@ -127,7 +166,9 @@ export const updateResort = async (req, res) => {
   }
 };
 
-// ✅ DELETE resort + related files
+// ============================================
+// ✅ DELETE Resort + related files
+// ============================================
 export const deleteResort = async (req, res) => {
   try {
     const { id } = req.params;
@@ -139,24 +180,24 @@ export const deleteResort = async (req, res) => {
     const resort = await Resort.findById(id);
     if (!resort) return res.status(404).json({ message: "Resort олдсонгүй" });
 
-    // 🧹 Холбогдсон файлуудыг устгах
+    // Холбогдсон файлууд устгах
     const files = await File.find({ resortsId: id });
 
     for (const file of files) {
-      const filePath =
-        file.image || file.video
-          ? path.join("public", file.image || file.video)
-          : null;
+      const filePath = path.join("public", file.image || file.video);
 
-      if (filePath && fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log("🗑️ Файл устгасан:", filePath);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+          console.log("🗑️ Файл устгасан:", filePath);
+        } catch (err) {
+          console.error("⚠️ Файл устгах үед алдаа:", err);
+        }
       }
 
       await File.findByIdAndDelete(file._id);
     }
 
-    // Resort устгах
     await Resort.findByIdAndDelete(id);
 
     res.json({
