@@ -38,57 +38,38 @@ export const getResortById = async (req, res) => {
 // ============================================
 // ✅ CREATE new resort
 // ============================================
+
 export const createResort = async (req, res) => {
   try {
+    console.log("✅ req.body:", req.body);
+    console.log("✅ req.files:", req.files);
+
     const { name, description, price, location } = req.body;
 
-    // Зураг байвал авах
-    const imageUrl = req.files?.images?.[0]
-      ? `/uploads/resorts/${req.files.images[0].filename}`
-      : "";
-
-    // Resort үүсгэнэ
+    // 1️⃣ Resort үүсгэх
     const newResort = new Resort({
       name,
       description,
       price,
       location,
-      image: imageUrl || "",
     });
 
     const savedResort = await newResort.save();
 
-    // Файлууд хадгалах (зураг, видео)
+    // 2️⃣ Файлууд хадгалах
     if (req.files && (req.files.images || req.files.videos)) {
-      if (req.files.images ) {
-        for (const file of req.files.images) {
-          const fileUrl = `/uploads/resorts/${file.filename}`;
-          const newFile = new File({
-            resortsId: savedResort._id,
-            filename: file.originalname,
-            size: file.size,
-            mimetype: file.mimetype,
-            image: fileUrl,
-          });
-          await newFile.save();
-        }
-      }
+      const images =
+        req.files.images?.map((f) => `/uploads/resorts/${f.filename}`) || [];
+      const videos =
+        req.files.videos?.map((f) => `/uploads/resorts/${f.filename}`) || [];
 
-      if (req.files.videos) {
-        for (const file of req.files.videos) {
-          const fileUrl = `/uploads/resorts/${file.filename}`;
-          const newFile = new File({
-            resortsId: savedResort._id,
-            filename: file.originalname,
-            size: file.size,
-            mimetype: file.mimetype,
-            video: fileUrl,
-          });
-          await newFile.save();
-        }
-      }
+      const newFile = new File({
+        resortsId: savedResort._id,
+        images,
+        videos,
+      });
 
-      console.log("✅ Files saved successfully");
+      await newFile.save();
     }
 
     res.status(201).json({
@@ -101,6 +82,7 @@ export const createResort = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // ============================================
 // ✅ UPDATE resort

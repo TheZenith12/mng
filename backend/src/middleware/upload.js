@@ -11,25 +11,15 @@ if (!fs.existsSync(uploadPath)) {
   console.log("📁 Upload folder created:", uploadPath);
 }
 
-// ⚙️ Multer storage тохиргоо
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    const uniqueName = Date.now() + "-" + file.originalname;
-    cb(null, uniqueName);
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname);
   },
 });
-
-// ✅ Нэг файл upload хийх middleware
-export const uploadSingle = multer({ storage }).single("file");
-
-// ✅ Олон зураг, видео upload хийх middleware
-export const uploadResortFiles = multer({ storage }).fields([
-  { name: "images", maxCount: 10 },
-  { name: "videos", maxCount: 10 },
-]);
 
 // ✅ Ерөнхий upload (default export)
 const upload = multer({ storage });

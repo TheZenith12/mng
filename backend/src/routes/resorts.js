@@ -23,11 +23,11 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+
 // ===== Routes =====
 router.get("/", getResorts);
 router.get("/:id", getResortById);
-router.post(
-  "/new",
+router.post("/new",
   upload.fields([
     { name: "images", maxCount: 10 },
     { name: "videos", maxCount: 5 },
