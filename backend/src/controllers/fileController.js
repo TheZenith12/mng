@@ -13,8 +13,8 @@ export const getFiles = async (req, res) => {
   } catch (err) {
     console.error("❌ getFiles алдаа:", err);
     res.status(500).json({ message: err.message });
-  }
-};
+  }z
+};z
 
 // ============================================
 // ✅ Upload multiple (images/videos) for resort
