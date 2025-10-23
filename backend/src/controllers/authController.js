@@ -1,11 +1,14 @@
 import Admin from '../models/Admin.js';
 import jwt from 'jsonwebtoken';
+import bcrypt from "bcryptjs";
 
 // Админ нэвтрэх
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const admin = await Admin.findOne({ email });
+
+    console.log('admin:',admin)
 
     if (!admin || admin.password !== password) {
       return res.status(400).json({ message: 'Invalid email or password' });

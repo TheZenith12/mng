@@ -5,17 +5,50 @@ import path from "path";
 import fs from "fs";
 
 // ============================================
-// ✅ GET all resorts
+// ✅ Админаас зөвхөн list харж байгаа нь шүү
 // ============================================
+
 export const getResorts = async (req, res) => {
   try {
-    const resorts = await Resort.find().sort({ createdAt: -1 });
-    res.json(resorts);
+    const resorts = await Resort.aggregate([
+      {
+        $lookup: {
+          from: "files",           // File collection
+          localField: "_id",       // Resort._id
+          foreignField: "resortsId", // File.resortsId
+          as: "files"
+        }
+      },
+      {
+        $addFields: {
+          image: { 
+            $arrayElemAt: [ "$files.images", 0 ] // эхний зураг л авна
+          }
+        }
+      },
+      {
+        $project: {
+          files: 0, // files array-г нуух
+          __v: 0
+        }
+      },
+      { $sort: { createdAt: -1 } }
+    ]);
+
+    console.log("resorts:",resorts)
+    res.status(200).json({
+      success: true,
+      count: resorts.length,
+      resorts
+    });
   } catch (err) {
     console.error("❌ getResorts алдаа:", err);
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
+
+
 
 // ============================================
 // ✅ GET resort by ID
@@ -41,9 +74,6 @@ export const getResortById = async (req, res) => {
 
 export const createResort = async (req, res) => {
   try {
-    console.log("✅ req.body:", req.body);
-    console.log("✅ req.files:", req.files);
-
     const { name, description, price, location } = req.body;
 
     // 1️⃣ Resort үүсгэх
