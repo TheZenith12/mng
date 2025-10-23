@@ -1,6 +1,7 @@
 import express from "express";
 import multer from "multer";
 import path from "path";
+import { v4 as uuidv4 } from "uuid"; // uuid ашиглана
 import {
   getResorts,
   getResortById,
@@ -12,16 +13,20 @@ import {
 const router = express.Router();
 
 // ===== Multer Config =====
+
+
+// Upload тохиргоо
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "public/uploads/resorts");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname.replace(/\s+/g, "_"));
+    const uniqueName = Date.now() + "-" + uuidv4() + path.extname(file.originalname);
+    cb(null, uniqueName);
   },
 });
 
-const upload = multer({ storage });
+export const upload = multer({ storage });
 
 
 // ===== Routes =====

@@ -67,7 +67,7 @@ function Resorts() {
             <div className="flex gap-4">
               <img
                 src={r.image && r.image.length > 0 ? `${API_BASE}${r.image[0]}` : "/placeholder.jpg"}
-                
+                //src={`${API_BASE.replace(/\/$/, "")}${r.image[0]}`}    
   //src={`${API_BASE}/uploads/resorts/1761182673557-494856460_723624283686399_8634161948974285040_n.jpg`}
                 alt={r.name}
                 className="w-28 h-20 rounded object-cover"
