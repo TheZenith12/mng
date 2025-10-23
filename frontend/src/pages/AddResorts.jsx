@@ -30,6 +30,12 @@ export default function AddResort() {
   // 🎥 Олон видео
   const handleVideos = (e) => setVideos([...e.target.files]);
 
+  // 🖼️ Preview-с зураг устгах
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // 📨 Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -102,12 +108,20 @@ export default function AddResort() {
           <input type="file" multiple accept="image/*" onChange={handleImages} />
           <div className="grid grid-cols-4 gap-2 mt-2">
             {previewUrls.map((url, i) => (
-              <img
-                key={i}
-                src={url}
-                alt="preview"
-                className="w-24 h-24 object-cover rounded border"
-              />
+              <div key={i} className="relative">
+                <img
+                  src={url}
+                  alt={`preview-${i}`}
+                  className="w-24 h-24 object-cover rounded border"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-700"
+                >
+                  ×
+                </button>
+              </div>
             ))}
           </div>
         </div>
