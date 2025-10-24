@@ -23,6 +23,8 @@ function EditResort() {
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState("");
+  const [removedImages, setRemovedImages] = useState([]);
+
 
   // 🔹 Resort мэдээлэл татах
   useEffect(() => {
@@ -67,8 +69,10 @@ function EditResort() {
   // 🔹 Шинэ зураг сонгох
   const handleNewImages = (e) => {
     const files = Array.from(e.target.files);
-    setNewImages((prev) => [...prev, ...files]);
+    setNewImages((prev) => [...prev, ...files]);// шинэ зураг нэмэх
     const urls = files.map((file) => URL.createObjectURL(file));
+    console.log("files:", files)
+    console.log("urls:", urls)
     setPreviewUrls((prev) => [...prev, ...urls]);
   };
 
@@ -76,44 +80,57 @@ function EditResort() {
   const handleNewVideos = (e) => setNewVideos([...newVideos, ...e.target.files]);
 
   // 🔹 Устгах функцийг бүх зурагт
-  const removeExistingImage = (index) => setExistingImages(existingImages.filter((_, i) => i !== index));
+  const removeExistingImage = (index) => {
+  const deleted = existingImages[index]; // устгаж буй зураг
+  setRemovedImages((prev) => [...prev, deleted]); // 🆕 устгасан list-д нэмэх
+  setExistingImages(existingImages.filter((_, i) => i !== index)); // UI-аас хасах
+  };
   const removeExistingVideo = (index) => setExistingVideos(existingVideos.filter((_, i) => i !== index));
   const removeNewImage = (index) => {
     setNewImages(newImages.filter((_, i) => i !== index));
     setPreviewUrls(previewUrls.filter((_, i) => i !== index));
+    console.log("newImages:",newImages)
+    console.log("previewUrls:",previewUrls)
   };
   const removeNewVideo = (index) => setNewVideos(newVideos.filter((_, i) => i !== index));
 
   // 🔹 Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  // 🔹 Submit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("description", form.description);
-    formData.append("price", form.price);
-    formData.append("location", form.location);
+  const formData = new FormData();
+  formData.append("name", form.name);
+  formData.append("description", form.description);
+  formData.append("price", form.price);
+  formData.append("location", form.location);
 
-    newImages.forEach((img) => formData.append("images", img));
-    newVideos.forEach((vid) => formData.append("videos", vid));
+  newImages.forEach((img) => formData.append("images", img));
+  newVideos.forEach((vid) => formData.append("videos", vid));
 
-    formData.append("existingImages", JSON.stringify(existingImages));
-    formData.append("existingVideos", JSON.stringify(existingVideos));
 
-    try {
-      await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("✅ Амжилттай шинэчлэгдлээ!");
-      navigate("/resorts");
-    } catch (err) {
-      console.error("❌ Update error:", err);
-      alert("Амралтын газар шинэчлэхэд алдаа гарлаа!");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 🆕 Устгасан зургуудын жагсаалт
+  formData.append("removedImages", JSON.stringify(removedImages));
+
+  try {
+    await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    alert("✅ Амжилттай шинэчлэгдлээ!");
+    setForm({ name: "", description: "", price: "", location: "" });
+      setNewImages([]);
+      setNewVideos([]);
+      setPreviewUrls([]);
+    navigate("/resorts");
+  } catch (err) {
+    console.error("❌ Update error:", err);
+    alert("Амралтын газар шинэчлэхэд алдаа гарлаа!");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   if (initializing) return <p>Loading...</p>;
   if (error) return <p className="text-red-500">{error}</p>;
