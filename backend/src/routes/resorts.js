@@ -9,6 +9,7 @@ import {
   updateResort,
   deleteResort,
 } from "../controllers/resortController.js";
+import upload from "../middleware/upload.js";
 
 const router = express.Router();
 
@@ -25,8 +26,6 @@ const storage = multer.diskStorage({
     cb(null, uniqueName);
   },
 });
-
-export const upload = multer({ storage });
 
 
 // ===== Routes =====
