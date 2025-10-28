@@ -24,7 +24,7 @@ function EditResort() {
   const [initializing, setInitializing] = useState(true);
   const [error, setError] = useState("");
   const [removedImages, setRemovedImages] = useState([]);
-
+  const [removedVideos, setRemovedVideos] = useState([]);
 
   // 🔹 Resort мэдээлэл татах
   useEffect(() => {
@@ -77,7 +77,14 @@ function EditResort() {
   };
 
   // 🔹 Шинэ видео сонгох
-  const handleNewVideos = (e) => setNewVideos([...newVideos, ...e.target.files]);
+  const handleNewVideos = (e) => {
+    const files = Array.from(e.target.files);
+    setNewVideos((prev) => [...prev, ...files]);// шинэ video нэмэх
+    const urls = files.map((file) => URL.createObjectURL(file));
+    console.log("files:", files)
+    console.log("urls:", urls)
+    setPreviewUrls((prev) => [...prev, ...urls]);
+  };
 
   // 🔹 Устгах функцийг бүх зурагт
   const removeExistingImage = (index) => {
@@ -85,16 +92,27 @@ function EditResort() {
   setRemovedImages((prev) => [...prev, deleted]); // 🆕 устгасан list-д нэмэх
   setExistingImages(existingImages.filter((_, i) => i !== index)); // UI-аас хасах
   };
-  const removeExistingVideo = (index) => setExistingVideos(existingVideos.filter((_, i) => i !== index));
-  const removeNewImage = (index) => {
+
+  const removeExistingVideo = (index) => {
+  const deleted = existingVideos[index]; // устгаж буй video
+  setRemovedVideos((prev) => [...prev, deleted]); // 🆕 устгасан list-д нэмэх
+  setExistingVideos(existingVideos.filter((_, i) => i !== index)); // UI-аас хасах
+  };
+
+    const removeNewImage = (index) => {
     setNewImages(newImages.filter((_, i) => i !== index));
     setPreviewUrls(previewUrls.filter((_, i) => i !== index));
     console.log("newImages:",newImages)
     console.log("previewUrls:",previewUrls)
   };
-  const removeNewVideo = (index) => setNewVideos(newVideos.filter((_, i) => i !== index));
+  
+    const removeNewVideo = (index) => {
+    setNewVideos(newVideos.filter((_, i) => i !== index));
+    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
+    console.log("newVideos:",newVideos)
+    console.log("previewUrls:",previewUrls)
+  };
 
-  // 🔹 Submit
   // 🔹 Submit
 const handleSubmit = async (e) => {
   e.preventDefault();
@@ -109,9 +127,8 @@ const handleSubmit = async (e) => {
   newImages.forEach((img) => formData.append("images", img));
   newVideos.forEach((vid) => formData.append("videos", vid));
 
-
-  // 🆕 Устгасан зургуудын жагсаалт
   formData.append("removedImages", JSON.stringify(removedImages));
+  formData.append("removedVideos", JSON.stringify(removedVideos));
 
   try {
     await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {

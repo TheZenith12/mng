@@ -121,21 +121,18 @@ export const createResort = async (req, res) => {
 
 
 // ============================================
-// ✅ UPDATE resort
+// ✅ UPDATE resort (images + videos)
 // ============================================
 export const updateResort = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, price, location, removedImages } = req.body;
-    const newImages = req.body.newImages || [];
-    const newVideos = req.body.newVideos || [];
+    const { name, description, price, location, removedImages, removedVideos } = req.body;
 
-    // 🧩 removedImages parse хийх
+    // 🧩 JSON string-үүдийг parse хийх
     const parsedRemovedImages = removedImages ? JSON.parse(removedImages) : [];
-    console.log("🗑️ removedImages:", removedImages);
-    console.log("🗑️ parsedRemovedImages:", parsedRemovedImages);
+    const parsedRemovedVideos = removedVideos ? JSON.parse(removedVideos) : [];
 
-    // 🧩 Resort олж авах
+    // 🧩 Resort олох
     const resort = await Resort.findById(id);
     if (!resort) {
       return res.status(404).json({ message: "Resort олдсонгүй" });
@@ -148,69 +145,98 @@ export const updateResort = async (req, res) => {
     resort.location = location || resort.location;
     await resort.save();
 
-    // 🧩 Сервер дээрх устгасан зургуудыг устгах
-    parsedRemovedImages.forEach((imgPath) => {
-      const fullPath = path.join(process.cwd(), "public", imgPath.replace(/^\/+/, "")); // замыг зөв холбох
+    // =============================
+    // 🗑️ Устгасан зураг, бичлэгийг устгах
+    // =============================
+
+    // 📸 Зураг устгах
+    for (const imgPath of parsedRemovedImages) {
+      const fullPath = path.join(process.cwd(), "public", imgPath.replace(/^\/+/, ""));
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
-        console.log("🧹 Deleted file:", fullPath);
+        console.log("🧹 Deleted image:", fullPath);
       }
-    });
+    }
 
-    // 🧩 DB дотор images array-аас устгах
+    // 🎥 Видео устгах
+    for (const vidPath of parsedRemovedVideos) {
+      const fullPath = path.join(process.cwd(), "public", vidPath.replace(/^\/+/, ""));
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+        console.log("🧹 Deleted video:", fullPath);
+      }
+    }
+
+    // =============================
+    // 🧩 DB доторх images/videos array-с устгах
+    // =============================
     if (parsedRemovedImages.length > 0) {
       await File.updateMany(
         { resortsId: id },
         { $pull: { images: { $in: parsedRemovedImages } } }
       );
-      console.log("🗑️ Files collection-аас устгалаа");
     }
 
-    // 2️⃣ Хоосон images үлдсэн File бичлэгүүдийг бүр мөсөн устгах
-  await File.deleteMany({
-    resortsId: id,
-    $or: [
-      { images: { $exists: true, $size: 0 } }, // хоосон images
-      { images: { $exists: false } }, // images талбар байхгүй
-    ],
-  });
-  console.log("🧹 Хоосон images-тэй File бичлэгүүдийг устгалаа");
+    if (parsedRemovedVideos.length > 0) {
+      await File.updateMany(
+        { resortsId: id },
+        { $pull: { videos: { $in: parsedRemovedVideos } } }
+      );
+    }
 
-    // 🧩 Шинэ зургууд DB-д хадгалах (шинээр нэмэгдсэн)
-    // if (newImages.length > 0) {
-    //   for (const imgUrl of newImages) {
-    //     const newFile = new File({
-    //       resortsId: resort._id,
-    //       image: imgUrl,
-    //     });
-    //     await newFile.save();
-    //   }
-    // }
-    
-    console.log("req.files:", req.files)
-    // 2️⃣ Файлууд хадгалах
+    // =============================
+    // 🧩 Шинэ зураг болон бичлэг нэмэх
+    // =============================
+    console.log("req.files:", req.files);
+
+    // --- шинэ зураг ---
     if (req.files && req.files.images) {
       const images =
-      req.files.images?.map((f) => `/uploads/resorts/${f.filename}`) || [];
-      console.log('images:',images)
+        req.files.images.map((f) => `/uploads/resorts/${f.filename}`) || [];
+      console.log("📸 New images:", images);
 
       await File.updateOne(
         { resortsId: resort._id },
-        { $push: { images: { $each: images } } } // array-д олон зураг нэмэх
+        { $push: { images: { $each: images } } },
+        { upsert: true } // File бичлэг байхгүй бол үүсгэнэ
       );
+    }
 
-    }      
+    // --- шинэ бичлэг ---
+    if (req.files && req.files.videos) {
+      const videos =
+        req.files.videos.map((f) => `/uploads/resorts/${f.filename}`) || [];
+      console.log("🎥 New videos:", videos);
 
-    // 🧩 Хэрвээ видео файл байвал DB-д хадгалах
-    
+      await File.updateOne(
+        { resortsId: resort._id },
+        { $push: { videos: { $each: videos } } },
+        { upsert: true }
+      );
+    }
+
+    // =============================
+    // 🧹 Хоосон file бичлэг устгах
+    // =============================
+    await File.deleteMany({
+      resortsId: id,
+      $and: [
+        { images: { $size: 0 } },
+        { videos: { $size: 0 } },
+      ],
+    });
+
+    // =============================
+    // ✅ Амжилттай хариу буцаах
+    // =============================
     const files = await File.find({ resortsId: resort._id });
-
     res.json({
       success: true,
-      message: "✅ Resort зураг болон мэдээлэл амжилттай шинэчлэгдлээ!",
+      message: "✅ Resort зураг болон бичлэг амжилттай шинэчлэгдлээ!",
       resort,
       files,
     });
+
   } catch (err) {
     console.error("❌ Resort шинэчлэхэд алдаа:", err);
     res.status(500).json({ message: err.message });
