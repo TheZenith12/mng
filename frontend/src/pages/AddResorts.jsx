@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-function AddResort() {
+export default function AddResort() {
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -12,51 +12,55 @@ function AddResort() {
   });
   const [images, setImages] = useState([]);
   const [videos, setVideos] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 📝 input утга өөрчлөх
-  const handleChange = (e) => {
+  // 🧾 Text input
+  const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
+
+  // 🖼️ Олон зураг сонгох
+  const handleImages = (e) => {
+    const files = Array.from(e.target.files);
+    setImages((prev) => [...prev, ...files]); // шинэ зураг нэмэх
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setPreviewUrls((prev) => [...prev, ...newPreviews]);
   };
 
-  // 🖼 зураг сонгох
-  const handleImages = (e) => setImages([...e.target.files]);
-
-  // 🎥 видео сонгох
+  // 🎥 Олон видео
   const handleVideos = (e) => setVideos([...e.target.files]);
 
-  // 📨 илгээх
+  // 🖼️ Preview-с зураг устгах
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // 📨 Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("description", form.description);
+    formData.append("price", form.price);
+    formData.append("location", form.location);
+
+    images.forEach((img) => formData.append("images", img));
+    videos.forEach((vid) => formData.append("videos", vid));
+
     try {
-      const formData = new FormData();
-      formData.append("name", form.name);
-      formData.append("description", form.description);
-      formData.append("price", form.price);
-      formData.append("location", form.location);
-
-      images.forEach((file) => formData.append("images", file));
-      videos.forEach((file) => formData.append("videos", file));
-
-      const res = await axios.post(
-        `${API_BASE}/api/admin/resorts/new`,
-        formData,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-        }
-      );
-
-      alert("✅ Амралтын газар амжилттай нэмэгдлээ!");
-      console.log("✅ SERVER RESPONSE:", res.data);
-
-      // талбарыг цэвэрлэх
+      await axios.post(`${API_BASE}/api/admin/resorts/new`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      alert("✅ Амжилттай нэмэгдлээ!");
       setForm({ name: "", description: "", price: "", location: "" });
       setImages([]);
       setVideos([]);
+      setPreviewUrls([]);
     } catch (err) {
-      console.error("❌ Алдаа гарлаа:", err);
+      console.error("❌ Алдаа:", err);
       alert("Амралтын газар нэмэхэд алдаа гарлаа!");
     } finally {
       setLoading(false);
@@ -67,83 +71,71 @@ function AddResort() {
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-semibold mb-4">🏕️ Амралтын газар нэмэх</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-4 rounded shadow"
-      >
-        <div>
-          <label className="block font-medium mb-1">Нэр</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
+        <input
+          name="name"
+          placeholder="Нэр"
+          value={form.name}
+          onChange={handleChange}
+          className="border w-full px-3 py-2 rounded"
+        />
+        <textarea
+          name="description"
+          placeholder="Тайлбар"
+          value={form.description}
+          onChange={handleChange}
+          className="border w-full px-3 py-2 rounded"
+        />
+        <input
+          name="price"
+          type="number"
+          placeholder="Үнэ"
+          value={form.price}
+          onChange={handleChange}
+          className="border w-full px-3 py-2 rounded"
+        />
+        <input
+          name="location"
+          placeholder="Байршил"
+          value={form.location}
+          onChange={handleChange}
+          className="border w-full px-3 py-2 rounded"
+        />
 
+        {/* 🖼️ Зураг сонгох */}
         <div>
-          <label className="block font-medium mb-1">Тайлбар</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            rows="3"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium mb-1">Үнэ (₮)</label>
-            <input
-              type="number"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              className="border w-full px-3 py-2 rounded"
-              required
-            />
+          <label className="font-medium">🖼️ Олон зураг сонгох</label>
+          <input type="file" multiple accept="image/*" onChange={handleImages} />
+          <div className="grid grid-cols-4 gap-2 mt-2">
+            {previewUrls.map((url, i) => (
+              <div key={i} className="relative">
+                <img
+                  src={url}
+                  alt={`preview-${i}`}
+                  className="w-24 h-24 object-cover rounded border"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(i)}
+                  className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center hover:bg-red-700"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="block font-medium mb-1">Байршил</label>
-            <input
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              className="border w-full px-3 py-2 rounded"
-              required
-            />
-          </div>
         </div>
 
+        {/* 🎥 Видео */}
         <div>
-          <label className="block font-medium mb-1">Зурагнууд</label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImages}
-          />
-        </div>
-
-        <div>
-          <label className="block font-medium mb-1">Бичлэгүүд</label>
-          <input
-            type="file"
-            multiple
-            accept="video/*"
-            onChange={handleVideos}
-          />
+          <label className="font-medium">🎥 Бичлэгүүд</label>
+          <input type="file" multiple accept="video/*" onChange={handleVideos} />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
         >
           {loading ? "Хадгалж байна..." : "Нэмэх"}
         </button>
@@ -151,5 +143,3 @@ function AddResort() {
     </div>
   );
 }
-
-export default AddResort;

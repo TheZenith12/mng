@@ -6,13 +6,7 @@ const resortSchema = new mongoose.Schema(
     description: String,
     price: Number,
     location: String,
-    files: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "File",
-      },
-    ],
-  },
+},
   { timestamps: true }
 );
 

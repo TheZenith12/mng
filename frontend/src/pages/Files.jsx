@@ -23,10 +23,10 @@ function Files() {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", selectedFile);
 
     try {
-      const res = await fetch(`${API_BASE}/api/admin/files`, {
+      const res = await fetch(`${API_BASE}/api/admin/files/upload`, {
         method: "POST",
         body: formData,
       });
@@ -39,27 +39,7 @@ function Files() {
     }
   }
 
-  {files.map((file) => (
-  <div key={file._id} className="file-card">
-    {file.image && file.image.startsWith("/uploads") ? (
-      <img
-        src={`http://localhost:5000${file.image}`}
-        alt={file.filename}
-        className="w-48 h-32 object-cover"
-      />
-    ) : file.video && file.video.startsWith("/uploads") ? (
-      <video
-        src={`http://localhost:5000${file.video}`}
-        controls
-        className="w-48 h-32 object-cover"
-      />
-    ) : (
-      <p>📁 {file.filename}</p>
-    )}
-  </div>
-))}
-
-
+  // --- Mount үед файлуудыг татах ---
   useEffect(() => {
     fetchFiles();
   }, []);
@@ -78,50 +58,70 @@ function Files() {
       {/* Файлуудыг харуулах хэсэг */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {files.map((f) => {
-          const fileUrl = f.url.startsWith("http")
-            ? f.url
-            : `${API_BASE}${f.url}`;
+          // --- URL тодорхойлох ---
+          const fileUrl =
+            f.url && f.url.startsWith("http")
+              ? f.url
+              : f.url
+              ? `${API_BASE}${f.url}`
+              : f.image
+              ? `${API_BASE}${f.image}`
+              : f.video
+              ? `${API_BASE}${f.video}`
+              : null;
+
+          // --- Видео эсэхийг шалгах ---
           const isVideo =
-            fileUrl.endsWith(".mp4") ||
-            fileUrl.endsWith(".mov") ||
-            fileUrl.endsWith(".avi");
+            fileUrl &&
+            (fileUrl.endsWith(".mp4") ||
+              fileUrl.endsWith(".mov") ||
+              fileUrl.endsWith(".avi") ||
+              fileUrl.endsWith(".webm"));
 
           return (
             <div
               key={f._id}
               className="bg-white p-2 rounded shadow hover:shadow-lg transition"
             >
-
-              {isVideo ? (
-                <video
-                  src={fileUrl}
-                  className="w-full h-40 object-cover rounded"
-                  controls
-                />
+              {fileUrl ? (
+                isVideo ? (
+                  <video
+                    src={fileUrl}
+                    className="w-full h-40 object-cover rounded"
+                    controls
+                  />
+                ) : (
+                  <img
+                    src={fileUrl}
+                    alt={f.filename || "file"}
+                    className="w-full h-40 object-cover rounded"
+                  />
+                )
               ) : (
-                <img
-                  src={fileUrl}
-                  alt={f.filename}
-                  className="w-full h-40 object-cover rounded"
-                />
+                <div className="text-gray-500 text-center py-10">
+                  ⚠️ File URL not found
+                </div>
               )}
+
               <div className="text-sm text-gray-600 truncate mt-1">
-                {f.filename}
+                {f.filename || "Unnamed file"}
               </div>
-              <a
-                href={fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-blue-600 hover:underline"
-              >
-                Open
-              </a>
+              {fileUrl && (
+                <a
+                  href={fileUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Open
+                </a>
+              )}
             </div>
           );
         })}
 
         {files.length === 0 && (
-          <div className="text-gray-500 col-span-full">
+          <div className="text-gray-500 col-span-full text-center">
             No files uploaded yet.
           </div>
         )}

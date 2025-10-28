@@ -14,202 +14,184 @@ function EditResort() {
     price: "",
     location: "",
   });
-  const [images, setImages] = useState([]);
-  const [videos, setVideos] = useState([]);
-  const [existingImages, setExistingImages] = useState([]);
-  const [existingVideos, setExistingVideos] = useState([]);
-  const [loading, setLoading] = useState(false);
 
-  // 🟢 Resort мэдээлэл авах
+  const [existingImages, setExistingImages] = useState([]); // Backend-аас ирсэн зургууд
+  const [existingVideos, setExistingVideos] = useState([]);
+  const [newImages, setNewImages] = useState([]); // Шинэ сонгосон зургууд
+  const [newVideos, setNewVideos] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]); // Шинэ зургуудын preview
+  const [loading, setLoading] = useState(false);
+  const [initializing, setInitializing] = useState(true);
+  const [error, setError] = useState("");
+  const [removedImages, setRemovedImages] = useState([]);
+
+
+  // 🔹 Resort мэдээлэл татах
   useEffect(() => {
-    axios
-      .get(`${API_BASE}/api/admin/resorts/${id}`)
-      .then((res) => {
+    const fetchResort = async () => {
+      try {
+        if (!id) {
+          setError("❌ Resort ID олдсонгүй");
+          return;
+        }
+
+        const res = await axios.get(`${API_BASE}/api/admin/resorts/${id}`);
+
+        const resort = res.data.resort || res.data;
+        const files = res.data.files || [];
+
         setForm({
-          name: res.data.name || "",
-          description: res.data.description || "",
-          price: res.data.price || "",
-          location: res.data.location || "",
+          name: resort?.name || "",
+          description: resort?.description || "",
+          price: resort?.price || "",
+          location: resort?.location || "",
         });
-        setExistingImages(res.data.images || []);
-        setExistingVideos(res.data.videos || []);
-      })
-      .catch((err) => console.error("Error loading resort:", err));
+
+        // Зургууд болон бичлэгүүд ялгах
+        setExistingImages(files.filter((f) => f.images).flatMap((f) => f.images));
+        setExistingVideos(files.filter((f) => f.videos).flatMap((f) => f.videos));
+      } catch (err) {
+        console.error("❌ Error loading resort:", err);
+        setError(err.response?.data?.message || "Resort ачаалахад алдаа гарлаа");
+      } finally {
+        setInitializing(false);
+      }
+    };
+
+    fetchResort();
   }, [id]);
 
-  // 🟢 Input өөрчлөлт
+  // 🔹 Input өөрчлөлт
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🟢 Шинэ зураг/видео оруулах
-  const handleImages = (e) => setImages(e.target.files);
-  const handleVideos = (e) => setVideos(e.target.files);
-
-  // 🟢 Update хийх
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("description", form.description);
-    formData.append("price", form.price);
-    formData.append("location", form.location);
-
-    for (let i = 0; i < images.length; i++) {
-      formData.append("images", images[i]);
-    }
-    for (let i = 0; i < videos.length; i++) {
-      formData.append("videos", videos[i]);
-    }
-
-    try {
-      await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      alert("✅ Амжилттай шинэчлэгдлээ!");
-      navigate("/resorts");
-    } catch (err) {
-      console.error("Update error:", err);
-      alert("❌ Алдаа гарлаа: " + err.message);
-    } finally {
-      setLoading(false);
-    }
+  // 🔹 Шинэ зураг сонгох
+  const handleNewImages = (e) => {
+    const files = Array.from(e.target.files);
+    setNewImages((prev) => [...prev, ...files]);// шинэ зураг нэмэх
+    const urls = files.map((file) => URL.createObjectURL(file));
+    console.log("files:", files)
+    console.log("urls:", urls)
+    setPreviewUrls((prev) => [...prev, ...urls]);
   };
 
-  // 🟢 Одоо байгаа зураг устгах (frontend дээрээс)
-  const handleRemoveImage = (index) => {
-    const updated = [...existingImages];
-    updated.splice(index, 1);
-    setExistingImages(updated);
-  };
+  // 🔹 Шинэ видео сонгох
+  const handleNewVideos = (e) => setNewVideos([...newVideos, ...e.target.files]);
 
-  const handleRemoveVideo = (index) => {
-    const updated = [...existingVideos];
-    updated.splice(index, 1);
-    setExistingVideos(updated);
+  // 🔹 Устгах функцийг бүх зурагт
+  const removeExistingImage = (index) => {
+  const deleted = existingImages[index]; // устгаж буй зураг
+  setRemovedImages((prev) => [...prev, deleted]); // 🆕 устгасан list-д нэмэх
+  setExistingImages(existingImages.filter((_, i) => i !== index)); // UI-аас хасах
   };
+  const removeExistingVideo = (index) => setExistingVideos(existingVideos.filter((_, i) => i !== index));
+  const removeNewImage = (index) => {
+    setNewImages(newImages.filter((_, i) => i !== index));
+    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
+    console.log("newImages:",newImages)
+    console.log("previewUrls:",previewUrls)
+  };
+  const removeNewVideo = (index) => setNewVideos(newVideos.filter((_, i) => i !== index));
 
-  if (loading) return <p>Updating...</p>;
-  if (!form.name && existingImages.length === 0) return <p>Loading...</p>;
+  // 🔹 Submit
+  // 🔹 Submit
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+
+  const formData = new FormData();
+  formData.append("name", form.name);
+  formData.append("description", form.description);
+  formData.append("price", form.price);
+  formData.append("location", form.location);
+
+  newImages.forEach((img) => formData.append("images", img));
+  newVideos.forEach((vid) => formData.append("videos", vid));
+
+
+  // 🆕 Устгасан зургуудын жагсаалт
+  formData.append("removedImages", JSON.stringify(removedImages));
+
+  try {
+    await axios.put(`${API_BASE}/api/admin/resorts/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    alert("✅ Амжилттай шинэчлэгдлээ!");
+    setForm({ name: "", description: "", price: "", location: "" });
+      setNewImages([]);
+      setNewVideos([]);
+      setPreviewUrls([]);
+    navigate("/resorts");
+  } catch (err) {
+    console.error("❌ Update error:", err);
+    alert("Амралтын газар шинэчлэхэд алдаа гарлаа!");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  if (initializing) return <p>Loading...</p>;
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-semibold mb-4">✏️ Амралтын газар засах</h2>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-4 bg-white p-4 rounded shadow"
-      >
-        <div>
-          <label className="block font-medium mb-1">Нэр</label>
-          <input
-            type="text"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            required
-          />
-        </div>
+      <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
+        {/* 📝 Нэр, тайлбар, үнэ, байршил */}
+        <input type="text" name="name" value={form.name} onChange={handleChange} placeholder="Нэр" className="border w-full px-3 py-2 rounded" required />
+        <textarea name="description" value={form.description} onChange={handleChange} placeholder="Тайлбар" className="border w-full px-3 py-2 rounded" required />
+        <input type="number" name="price" value={form.price} onChange={handleChange} placeholder="Үнэ" className="border w-full px-3 py-2 rounded" required />
+        <input type="text" name="location" value={form.location} onChange={handleChange} placeholder="Байршил" className="border w-full px-3 py-2 rounded" required />
 
-        <div>
-          <label className="block font-medium mb-1">Тайлбар</label>
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            className="border w-full px-3 py-2 rounded"
-            rows="3"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block font-medium mb-1">Үнэ (₮)</label>
-            <input
-              type="number"
-              name="price"
-              value={form.price}
-              onChange={handleChange}
-              className="border w-full px-3 py-2 rounded"
-              required
-            />
-          </div>
-          <div>
-            <label className="block font-medium mb-1">Байршил</label>
-            <input
-              type="text"
-              name="location"
-              value={form.location}
-              onChange={handleChange}
-              className="border w-full px-3 py-2 rounded"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Одоо байгаа зураг, бичлэг */}
+        {/* 🖼️ Одоо байгаа зургууд */}
         <div>
           <h3 className="font-medium mt-3 mb-1">Одоо байгаа зургууд</h3>
           <div className="flex flex-wrap gap-2">
             {existingImages.map((img, i) => (
               <div key={i} className="relative">
-                <img
-                  src={`${API_BASE}${img}`}
-                  alt=""
-                  className="w-24 h-24 object-cover rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveImage(i)}
-                  className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded"
-                >
-                  ✕
-                </button>
+                <img src={`${API_BASE}${img}`} alt="" className="w-24 h-24 object-cover rounded" />
+                <button type="button" onClick={() => removeExistingImage(i)} className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded">✕</button>
               </div>
             ))}
           </div>
+        </div>
 
-          <h3 className="font-medium mt-3 mb-1">Одоо байгаа бичлэгүүд</h3>
+        {/* 🖼️ Шинэ зургууд */}
+        <div>
+          <h3 className="font-medium mt-3 mb-1">Шинэ зургууд</h3>
+          <input type="file" multiple accept="image/*" onChange={handleNewImages} />
+          <div className="flex flex-wrap gap-2 mt-2">
+            {previewUrls.map((url, i) => (
+              <div key={i} className="relative">
+                <img src={url} alt="" className="w-24 h-24 object-cover rounded" />
+                <button type="button" onClick={() => removeNewImage(i)} className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded">✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 🎥 Бичлэгүүд */}
+        <div>
+          <h3 className="font-medium mt-3 mb-1">Бичлэгүүд</h3>
           <div className="flex flex-wrap gap-2">
             {existingVideos.map((vid, i) => (
               <div key={i} className="relative">
-                <video
-                  width="120"
-                  height="90"
-                  controls
-                  src={`${API_BASE}${vid}`}
-                  className="rounded"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveVideo(i)}
-                  className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded"
-                >
-                  ✕
-                </button>
+                <video width="120" height="90" controls src={`${API_BASE}${vid}`} className="rounded" />
+                <button type="button" onClick={() => removeExistingVideo(i)} className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded">✕</button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Шинээр upload хийх */}
-        <div className="mt-3">
-          <label className="block font-medium mb-1">Шинэ зураг оруулах</label>
-          <input type="file" multiple accept="image/*" onChange={handleImages} />
-          <label className="block font-medium mb-1 mt-2">
-            Шинэ бичлэг оруулах
-          </label>
-          <input type="file" multiple accept="video/*" onChange={handleVideos} />
+        <div>
+          <label className="block font-medium mb-1 mt-3">Шинэ бичлэг оруулах</label>
+          <input type="file" multiple accept="video/*" onChange={handleNewVideos} />
         </div>
 
-        <button
-          type="submit"
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4"
-        >
+        <button type="submit" disabled={loading} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mt-4">
           {loading ? "Хадгалж байна..." : "Шинэчлэх"}
         </button>
       </form>
