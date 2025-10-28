@@ -2,7 +2,7 @@ import Admin from '../models/Admin.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from "bcryptjs";
 
-// Админ нэвтрэх
+
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -22,7 +22,7 @@ export const login = async (req, res) => {
   }
 };
 
-// Админ бүртгэх
+
 export const register = async (req, res) => {
   try {
     const { email, password } = req.body;
