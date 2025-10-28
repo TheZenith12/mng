@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_BASE } from "../global";
 
 function Files() {
   const [files, setFiles] = useState([]);
 
-  // --- Файлуудыг татах ---
+  
   async function fetchFiles() {
     try {
       const res = await fetch(`${API_BASE}/api/admin/files`);

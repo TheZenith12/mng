@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_BASE } from "../global";
 
 export default function AddResort() {
   const [form, setForm] = useState({
@@ -54,13 +53,13 @@ export default function AddResort() {
       await axios.post(`${API_BASE}/api/admin/resorts/new`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      alert("✅ Амжилттай нэмэгдлээ!");
+      alert("Амжилттай нэмэгдлээ!");
       setForm({ name: "", description: "", price: "", location: "" });
       setImages([]);
       setVideos([]);
       setPreviewUrls([]);
     } catch (err) {
-      console.error("❌ Алдаа:", err);
+      console.error("Алдаа:", err);
       alert("Амралтын газар нэмэхэд алдаа гарлаа!");
     } finally {
       setLoading(false);
@@ -69,7 +68,7 @@ export default function AddResort() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-4">🏕️ Амралтын газар нэмэх</h2>
+      <h2 className="text-2xl font-semibold mb-4">Амралтын газар нэмэх</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 rounded shadow">
         <input
@@ -102,7 +101,7 @@ export default function AddResort() {
           className="border w-full px-3 py-2 rounded"
         />
 
-        {/* 🖼️ Зураг сонгох */}
+
         <div>
           <label className="font-medium">🖼️ Олон зураг сонгох</label>
           <input type="file" multiple accept="image/*" onChange={handleImages} />
@@ -126,7 +125,7 @@ export default function AddResort() {
           </div>
         </div>
 
-        {/* 🎥 Видео */}
+
         <div>
           <label className="font-medium">🎥 Бичлэгүүд</label>
           <input type="file" multiple accept="video/*" onChange={handleVideos} />

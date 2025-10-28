@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Home, List, PlusCircle, FileText } from 'lucide-react'
+import { List, PlusCircle } from 'lucide-react'
 
 function Sidebar() {
   return (
@@ -11,7 +11,6 @@ function Sidebar() {
       <nav className="p-4 space-y-1">
         <NavItem to="/resorts" icon={<List size={16} />}>Resorts</NavItem>
         <NavItem to="/resorts/new" icon={<PlusCircle size={16} />}>Add Resort</NavItem>
-        <NavItem to="/files" icon={<FileText size={16} />}>Files</NavItem>
       </nav>
     </aside>
   )

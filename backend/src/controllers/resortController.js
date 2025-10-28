@@ -119,10 +119,7 @@ export const createResort = async (req, res) => {
 };
 
 
-
-// ============================================
-// ✅ UPDATE resort (images + videos)
-// ============================================
+//  UPDATE resort 
 export const updateResort = async (req, res) => {
   try {
     const { id } = req.params;

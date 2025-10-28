@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:5000";
+import { API_BASE } from "../global";
 
 function EditResort() {
   const { id } = useParams();
@@ -31,7 +30,7 @@ function EditResort() {
     const fetchResort = async () => {
       try {
         if (!id) {
-          setError("❌ Resort ID олдсонгүй");
+          setError("Resort ID олдсонгүй");
           return;
         }
 
@@ -47,11 +46,11 @@ function EditResort() {
           location: resort?.location || "",
         });
 
-        // Зургууд болон бичлэгүүд ялгах
+     
         setExistingImages(files.filter((f) => f.images).flatMap((f) => f.images));
         setExistingVideos(files.filter((f) => f.videos).flatMap((f) => f.videos));
       } catch (err) {
-        console.error("❌ Error loading resort:", err);
+        console.error("Error loading resort:", err);
         setError(err.response?.data?.message || "Resort ачаалахад алдаа гарлаа");
       } finally {
         setInitializing(false);
@@ -61,41 +60,41 @@ function EditResort() {
     fetchResort();
   }, [id]);
 
-  // 🔹 Input өөрчлөлт
+  
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Шинэ зураг сонгох
+  
   const handleNewImages = (e) => {
     const files = Array.from(e.target.files);
-    setNewImages((prev) => [...prev, ...files]);// шинэ зураг нэмэх
+    setNewImages((prev) => [...prev, ...files]);
     const urls = files.map((file) => URL.createObjectURL(file));
     console.log("files:", files)
     console.log("urls:", urls)
     setPreviewUrls((prev) => [...prev, ...urls]);
   };
 
-  // 🔹 Шинэ видео сонгох
+  
   const handleNewVideos = (e) => {
     const files = Array.from(e.target.files);
-    setNewVideos((prev) => [...prev, ...files]);// шинэ video нэмэх
+    setNewVideos((prev) => [...prev, ...files]);
     const urls = files.map((file) => URL.createObjectURL(file));
     console.log("files:", files)
     console.log("urls:", urls)
     setPreviewUrls((prev) => [...prev, ...urls]);
   };
 
-  // 🔹 Устгах функцийг бүх зурагт
+ 
   const removeExistingImage = (index) => {
-  const deleted = existingImages[index]; // устгаж буй зураг
-  setRemovedImages((prev) => [...prev, deleted]); // 🆕 устгасан list-д нэмэх
-  setExistingImages(existingImages.filter((_, i) => i !== index)); // UI-аас хасах
+  const deleted = existingImages[index]; 
+  setRemovedImages((prev) => [...prev, deleted]); 
+  setExistingImages(existingImages.filter((_, i) => i !== index)); 
   };
 
   const removeExistingVideo = (index) => {
-  const deleted = existingVideos[index]; // устгаж буй video
-  setRemovedVideos((prev) => [...prev, deleted]); // 🆕 устгасан list-д нэмэх
+  const deleted = existingVideos[index]; 
+  setRemovedVideos((prev) => [...prev, deleted]); 
   setExistingVideos(existingVideos.filter((_, i) => i !== index)); // UI-аас хасах
   };
 
@@ -176,7 +175,7 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        {/* 🖼️ Шинэ зургууд */}
+
         <div>
           <h3 className="font-medium mt-3 mb-1">Шинэ зургууд</h3>
           <input type="file" multiple accept="image/*" onChange={handleNewImages} />
@@ -190,7 +189,7 @@ const handleSubmit = async (e) => {
           </div>
         </div>
 
-        {/* 🎥 Бичлэгүүд */}
+   
         <div>
           <h3 className="font-medium mt-3 mb-1">Бичлэгүүд</h3>
           <div className="flex flex-wrap gap-2">
