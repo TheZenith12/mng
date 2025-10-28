@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react"; // 🔍 icon
-import places from "../data/Places.js";
+import places from "../data/Places.js"; // ✅ ЗӨВ — .js болгосон
 
 export default function PlacesGrid() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -26,22 +26,16 @@ export default function PlacesGrid() {
         {/* Амралтын Grid */}
         {filteredPlaces.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            
             {filteredPlaces.map((p) => (
               <article
                 key={p.id}
                 className="bg-white rounded-xl shadow hover:shadow-2xl overflow-hidden flex flex-col transition-transform hover:-translate-y-1"
               >
-                <div className="relative">
                 <img
-                 
                   src={p.img}
                   alt={p.name}
                   className="w-full h-48 object-cover"
-                 
                 />
-                <Link to={`/details/${p.id}`} className="absolute inset-0" />
-                </div>
                 <div className="p-4 flex-1 flex flex-col">
                   <h3 className="text-lg font-semibold text-center">{p.name}</h3>
                   <p className="text-sm text-gray-600 mt-2 text-center flex-1">
@@ -54,7 +48,7 @@ export default function PlacesGrid() {
                   <div className="mt-5 flex justify-center">
                     <Link
                       to={`/details/${p.id}`}
-                      className="px-5 py-1 bg-green-300 text-white rounded-full font-medium hover:bg-green-500 transition-transform hover:scale-105 shadow-md"
+                      className="px-5 py-2 bg-green-600 text-white rounded-full font-medium hover:bg-green-700 transition-transform hover:scale-105 shadow-md"
                     >
                       Дэлгэрэнгүй үзэх
                     </Link>
@@ -98,7 +92,7 @@ export default function PlacesGrid() {
         {!showSearch ? (
           <button
             onClick={() => setShowSearch(true)}
-            className="p-3 bg-green-600 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
+            className="p-4 bg-green-600 text-white rounded-full shadow-lg hover:scale-110 transition-transform"
           >
             <Search className="w-6 h-6" />
           </button>
